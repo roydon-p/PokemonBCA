@@ -28,6 +28,10 @@ namespace PokemonMatch.BusinessLogic
         {
             try
             {
+                if (String.IsNullOrWhiteSpace(pokemonName))
+                {
+                    return "Please enter a pokemon name";
+                }
                 Pokemon pokemon = await GetPokemonDetails(pokemonName);
                 //_log.LogInformation("In GetPokemonTypeEffectiveness- Pokemon:" + pokemon.Id);
                 if (pokemon == null)
@@ -60,7 +64,7 @@ namespace PokemonMatch.BusinessLogic
             {
                 using (HttpClient httpClient = _httpClientFactory.CreateClient())
                 {
-                    HttpResponseMessage response = await httpClient.GetAsync($"{BaseUrl}pokemon/{pokemonName}/");
+                    HttpResponseMessage response = await httpClient.GetAsync($"{BaseUrl}pokemon/{pokemonName.ToLower()}/");
                     response.EnsureSuccessStatusCode();
                     string jsonResponse = await response.Content.ReadAsStringAsync();
 
