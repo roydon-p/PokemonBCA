@@ -2,6 +2,6 @@
 {
     public interface IPokemonTypeEffectiveness
     {
-        string GetPokemonTypeEffectiveness(string pokemonName);
+        Task<string> GetPokemonTypeEffectiveness(string pokemonName);
     }
 }

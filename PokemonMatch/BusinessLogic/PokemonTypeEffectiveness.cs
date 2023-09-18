@@ -24,17 +24,22 @@ namespace PokemonMatch.BusinessLogic
         /// </summary>
         /// <param name="pokemonName">The pokemon name input.</param>
         /// <returns>The string containing the pokemon's strengths and weaknesses.</returns>
-        public string GetPokemonTypeEffectiveness(string pokemonName)
+        public async Task<string> GetPokemonTypeEffectiveness(string pokemonName)
         {
             try
             {
-                Pokemon pokemon = GetPokemonDetails(pokemonName);
+                Pokemon pokemon = await GetPokemonDetails(pokemonName);
+                //_log.LogInformation("In GetPokemonTypeEffectiveness- Pokemon:" + pokemon.Id);
                 if (pokemon == null)
                 {
                     return "Could not find information for " + pokemonName;
                 }
-                List<TypeRelations> allDamageRelations = GetAllDamageRelations(pokemon.Types);
+                List<TypeRelations> allDamageRelations = await GetAllDamageRelations(pokemon.Types);
+                //_log.LogInformation("In GetPokemonTypeEffectiveness- All Damage Relations count:" + allDamageRelations.Count);
+
                 string pokemonEffectiveness = BuildEffectivenessString(pokemonName, allDamageRelations);
+                //_log.LogInformation("In GetPokemonTypeEffectiveness- Output:" + pokemonEffectiveness);
+
                 return pokemonEffectiveness;
             }
             catch (Exception ex)
@@ -49,15 +54,15 @@ namespace PokemonMatch.BusinessLogic
         /// </summary>
         /// <param name="pokemonName">The pokemon name input.</param>
         /// <returns>The Pokemon object deserialized from the json returned by the API.</returns>
-        private Pokemon GetPokemonDetails(string pokemonName)
+        private async Task<Pokemon> GetPokemonDetails(string pokemonName)
         {
             try
             {
                 using (HttpClient httpClient = _httpClientFactory.CreateClient())
                 {
-                    HttpResponseMessage response = httpClient.GetAsync($"{BaseUrl}pokemon/{pokemonName}/").Result;
+                    HttpResponseMessage response = await httpClient.GetAsync($"{BaseUrl}pokemon/{pokemonName}/");
                     response.EnsureSuccessStatusCode();
-                    string jsonResponse = response.Content.ReadAsStringAsync().Result;
+                    string jsonResponse = await response.Content.ReadAsStringAsync();
 
                     return JsonConvert.DeserializeObject<Pokemon>(jsonResponse);
                 }
@@ -74,13 +79,14 @@ namespace PokemonMatch.BusinessLogic
         /// </summary>
         /// <param name="pokemonTypes">The List of types for current pokemon.</param>
         /// <returns>The List of Damage relations for current pokemons types.</returns>
-        private List<TypeRelations> GetAllDamageRelations(List<PokemonType> pokemonTypes)
+        private async Task<List<TypeRelations>> GetAllDamageRelations(List<PokemonType> pokemonTypes)
         {
             List<TypeRelations> allDamageRelations = new List<TypeRelations>();
 
             foreach (var pokeType in pokemonTypes)
             {
-                TypeRelations damageRelations = GetPokemonTypeRelationsForType(pokeType.Type.Name);
+                TypeRelations damageRelations = await GetPokemonTypeRelationsForType(pokeType.Type.Name);
+                //_log.LogInformation("In GetAllDamageRelations- damage relations-" + pokeType + "-" + damageRelations.DoubleDamageFrom[0].Name);
                 if (damageRelations != null)
                 {
                     allDamageRelations.Add(damageRelations);
@@ -94,15 +100,15 @@ namespace PokemonMatch.BusinessLogic
         /// </summary>
         /// <param name="pokemonType">The type for current pokemon.</param>
         /// <returns>The Damage relations for current pokemons type.</returns>
-        private TypeRelations GetPokemonTypeRelationsForType(string pokemonType)
+        private async Task<TypeRelations> GetPokemonTypeRelationsForType(string pokemonType)
         {
             try
             {
                 using (HttpClient httpClient = _httpClientFactory.CreateClient())
                 {
-                    HttpResponseMessage response = httpClient.GetAsync($"{BaseUrl}type/{pokemonType}/").Result;
+                    HttpResponseMessage response = await httpClient.GetAsync($"{BaseUrl}type/{pokemonType}/");
                     response.EnsureSuccessStatusCode();
-                    string jsonResponse = response.Content.ReadAsStringAsync().Result;
+                    string jsonResponse = await response.Content.ReadAsStringAsync();
 
                     Type typeDetails = JsonConvert.DeserializeObject<Type>(jsonResponse);
 
